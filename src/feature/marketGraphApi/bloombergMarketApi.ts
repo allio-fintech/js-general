@@ -1,3 +1,4 @@
+// It seems that this method will get robot detect error
 import axios from 'axios';
 
 enum TIME_FRAME {
@@ -7,15 +8,40 @@ enum TIME_FRAME {
   '5_YEAR' = '5_YEAR',
 }
 
-class bloombergMarketApi {
-  public static TIME_FRAME = TIME_FRAME;
+enum PERIOD {
+  monthly = 'monthly',
+  daily = 'daily',
+}
 
-  public async bulkTimeSeries(id: string, timeFrame: TIME_FRAME) {
-    const queryUrl = `https://www.bloomberg.com/markets/api/bulk-time-series/price/${id}?timeFrame=${timeFrame}`;
-    const query = axios.get(queryUrl);
+// const oldUrl = 'https://www.bloomberg.com/markets/api/bulk-time-series/price/';
+const newUrl = 'https://www.bloomberg.com/markets2/api/history/';
+
+const bloombergMarketApi = {
+  TIME_FRAME,
+  PERIOD,
+  async bulkTimeSeries(
+    id: string,
+    {
+      timeFrame = TIME_FRAME['1_MONTH'],
+      period = PERIOD.daily,
+      volumePeriod,
+    }: {
+      timeFrame?: TIME_FRAME;
+      period?: PERIOD;
+      volumePeriod?: PERIOD;
+    } = {}
+  ) {
+    const queryUrl = `${newUrl}${id}/`;
+    const query = axios.get(queryUrl, {
+      params: {
+        timeFrame,
+        period,
+        volumePeriod,
+      },
+    });
     const { data } = await query;
     return data;
-  }
-}
+  },
+};
 
 export default bloombergMarketApi;
