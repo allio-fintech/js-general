@@ -1,13 +1,13 @@
-import bloombergMarketApi from './bloombergMarketApi';
+import yahooFinanceMarketApi from './yahooFinanceMarketApi';
 
 const main = async () => {
-  const sp500Id = 'SPX:IND';
-  const data = await bloombergMarketApi.bulkTimeSeries(sp500Id, {
-    timeFrame: bloombergMarketApi.TIME_FRAME['5_YEAR'],
-    period: bloombergMarketApi.PERIOD.daily,
+  const ticker = '^GSPC';
+  const data = await yahooFinanceMarketApi.chartQuery(ticker, {
+    range: yahooFinanceMarketApi.RANGE.max,
+    interval: yahooFinanceMarketApi.INTERVAL.daily,
   });
 
-  console.log(data);
+  console.log(JSON.stringify(data));
 };
 
 export default main;

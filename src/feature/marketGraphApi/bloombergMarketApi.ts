@@ -20,7 +20,7 @@ const bloombergMarketApi = {
   TIME_FRAME,
   PERIOD,
   async bulkTimeSeries(
-    id: string,
+    ticker: string,
     {
       timeFrame = TIME_FRAME['1_MONTH'],
       period = PERIOD.daily,
@@ -31,7 +31,7 @@ const bloombergMarketApi = {
       volumePeriod?: PERIOD;
     } = {}
   ) {
-    const queryUrl = `${newUrl}${id}/`;
+    const queryUrl = `${newUrl}${ticker}/PX_LAST`;
     const query = axios.get(queryUrl, {
       params: {
         timeFrame,
