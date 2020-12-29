@@ -10,3 +10,4 @@ out/
 lib/
 src/config/
 **/src/proto
+.env*.local
