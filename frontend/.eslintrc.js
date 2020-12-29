@@ -76,6 +76,7 @@ module.exports = {
     'react-hooks/rules-of-hooks': 2,
     'react-hooks/exhaustive-deps': 2,
     'no-bitwise': 2,
+    'no-cond-assign': [1, 'except-parens'],
     '@emotion/no-vanilla': 2,
     '@emotion/import-from-emotion': 2,
     '@emotion/styled-import': 2,
