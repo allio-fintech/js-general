@@ -23,7 +23,7 @@ enum INTERVAL {
 
 interface YahooFinanceQueryParams {
   range?: RANGE;
-  interval?: INTERVAL.daily;
+  interval?: INTERVAL;
   region?: string;
   lang?: string;
   includePrePost?: boolean;
