@@ -3,7 +3,7 @@ import sp500Data from '../../../devData/yahoo_finance_market_history/sp500_10y_d
 import btcData from '../../../devData/yahoo_finance_market_history/btc-usd_10y_daily.json';
 
 const main = async () => {
-  const ticker = 'AGG';
+  const ticker = 'VNQ';
   const data = await yahooFinanceMarketApi.chartQuery(ticker, {
     range: yahooFinanceMarketApi.RANGE['10y'],
     interval: yahooFinanceMarketApi.INTERVAL.monthly,

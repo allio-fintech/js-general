@@ -6,12 +6,18 @@ import { Legend, Line, LineChart, Tooltip, XAxis, YAxis } from 'recharts';
 import rem from 'utils/styles/rem';
 import transition from 'utils/styles/transition';
 import sp500Data from '../../../../devData/yahoo_finance_market_history/sp500_10y_daily.json';
+import btcData from '../../../../devData/yahoo_finance_market_history/btc-usd_10y_daily.json';
 import gbtcData from '../../../../devData/yahoo_finance_market_history/gbtc_10y_daily.json';
 import aggData from '../../../../devData/yahoo_finance_market_history/agg_10y_daily.json';
 import ffgcxData from '../../../../devData/yahoo_finance_market_history/ffgcx_10y_daily.json';
 import indsData from '../../../../devData/yahoo_finance_market_history/inds_10y_daily.json';
+import vnqData from '../../../../devData/yahoo_finance_market_history/vnq_10y_daily.json';
 import ringData from '../../../../devData/yahoo_finance_market_history/ring_10y_daily.json';
 import susaData from '../../../../devData/yahoo_finance_market_history/susa_10y_daily.json';
+
+const graphStyles = css`
+  margin: ${rem(20)} auto;
+`;
 
 const buttonStyles = css`
   padding: ${rem(4)} ${rem(8)};
@@ -60,28 +66,39 @@ const colors = [
   'green',
   'grey',
   'black',
-  'pink',
+  'navy',
 ];
 const rawData = [
   sp500Data,
-  gbtcData,
+  btcData,
   aggData,
   ffgcxData,
-  indsData,
+  vnqData,
   ringData,
   susaData,
 ];
 const dataName = [
   'S&P 500',
-  'GBTC',
+  'BTC',
   'AGG',
   'FFGCX',
-  'INDS',
+  'VNQ',
   'RING',
   'SUSA',
   'Allio',
 ];
-const scale = [0.02, 2, 0.25, 1.5, 1, 0.7, 1];
+const allioAllocation = [
+  new Decimal(3).dividedBy(7),
+  new Decimal(1).dividedBy(7),
+  new Decimal(0).dividedBy(7),
+  new Decimal(0).dividedBy(7),
+  new Decimal(1).dividedBy(7),
+  new Decimal(1).dividedBy(7),
+  new Decimal(1).dividedBy(7),
+];
+const allioInitialValue = 100;
+const scale = [0.003, 0.001, 0.25, 1.5, 1, 0.7, 1, 0.01];
+const show = [0, 1, 7];
 const data = rawData.reduce<Record<string, any>>((accu, assetData, i) => {
   const { timestamp, indicators } = assetData[0];
   timestamp.forEach((ts, ind) => {
@@ -104,25 +121,46 @@ const data = rawData.reduce<Record<string, any>>((accu, assetData, i) => {
   return accu;
 }, {});
 
-const startDate = '2010-01-01';
+const startDate = '2015-06-01';
 const shortenedData = Object.values(data)
-  .filter((datum) => datum.date > startDate)
+  .filter(
+    (datum) =>
+      datum.date >= startDate &&
+      (Object.keys(datum).length - 1) / 2 === rawData.length
+  )
   .sort((a, b) => b.date - a.date);
 
-// const initialFund = 10000;
-// let numAsset: number;
-// const allocation: Record<string,   = {};
-// shortenedData.forEach((datum, i) => {
-//   currentNum
-//   if (i === 0) {
-//     numAsset = (Object(datum).keys().length - 1) / 2;
+const initialData = Array.from<unknown, Decimal>(
+  {
+    length: (Object.keys(shortenedData[0]).length - 1) / 2,
+  },
+  (_, i) => shortenedData[0][`${i}-actual`]
+);
 
-//   }
-// });
-const getColumnsOption = (dataName: string[]) => {
-  const columnsOption = dataName.map((assetName, i) => ({
-    key: `${i}-scaled`,
-    header: assetName,
+const dataWithAllio = shortenedData.map((datum) => {
+  const growthFromBeginning = initialData.reduce<Decimal>(
+    (accu, initialValue, ind) => {
+      return accu.plus(
+        (datum[`${ind}-actual`] as Decimal)
+          ?.dividedBy(initialValue)
+          .times(allioAllocation[ind]) ?? 0
+      );
+    },
+    new Decimal(0)
+  );
+  const allioPrice = growthFromBeginning.times(allioInitialValue);
+  const allioIndex = initialData.length;
+  return {
+    ...datum,
+    [`${allioIndex}-actual`]: allioPrice,
+    [`${allioIndex}-scaled`]: allioPrice.times(scale[allioIndex]),
+  };
+});
+
+const getColumnsOption = (dataName: string[], show: number[]) => {
+  const columnsOption = show.map((dataSwitch) => ({
+    key: `${dataSwitch}-scaled`,
+    header: dataName[dataSwitch],
   }));
   columnsOption.unshift({ key: 'date', header: 'date' });
   return columnsOption;
@@ -168,36 +206,44 @@ const MarketGraph: FC = () => {
 
   const handleGenerateCsvClick = useCallback(() => {
     generateCsvUrl({
-      data: shortenedData,
-      columns: getColumnsOption(dataName),
+      data: dataWithAllio,
+      columns: getColumnsOption(dataName, show),
     }).then((url) => {
       setCsvUrl(url);
     });
-  }, [dataName, shortenedData, setCsvUrl]);
+  }, [dataName, dataWithAllio, setCsvUrl]);
 
   return (
     <div>
-      <LineChart width={800} height={600} data={shortenedData}>
-        <XAxis dataKey="date" />
-        <YAxis hide />
-        <Tooltip
-          formatter={(_1, _2, payload) => {
-            const index = `${payload.dataKey}`.split('-')[0];
-            const newLableName = `${index}-actual`;
-            return payload.payload[newLableName].toFixed(2);
-          }}
-        />
-        <Legend />
-        {dataName.map((assetName, i) => (
-          <Line
-            key={assetName}
-            dataKey={`${i}-scaled`}
-            dot={false}
-            name={assetName}
-            stroke={colors[i]}
+      <div css={graphStyles}>
+        <LineChart
+          data={dataWithAllio}
+          width={800}
+          height={600}
+          margin={{ left: 20, right: 20 }}
+        >
+          <XAxis dataKey="date" />
+          <YAxis hide domain={[0, 'dataMax +20']} />
+          <Tooltip
+            formatter={(_1, _2, payload) => {
+              const index = `${payload.dataKey}`.split('-')[0];
+              const newLableName = `${index}-actual`;
+              return payload.payload[newLableName].toFixed(2);
+            }}
           />
-        ))}
-      </LineChart>
+          <Legend />
+          {show.map((dataSwitch) => (
+            <Line
+              key={dataName[dataSwitch]}
+              dataKey={`${dataSwitch}-scaled`}
+              dot={false}
+              name={dataName[dataSwitch]}
+              stroke={colors[dataSwitch]}
+              strokeWidth={2}
+            />
+          ))}
+        </LineChart>
+      </div>
       <div>
         <button
           css={buttonStyles}
