@@ -1,18 +1,40 @@
-import { FC, useState } from 'react';
-import yahooFinanceMarketApi from '../marketHistoryQuery/yahooFinanceMarketApi';
-
-const fetchMarketDataByTicker = async (ticker: string) =>
-  yahooFinanceMarketApi.chartQuery(ticker, {
-    range: yahooFinanceMarketApi.YF_RANGE['10y'],
-    interval: yahooFinanceMarketApi.YF_INTERVAL.monthly,
-  });
+import { FC, FormEvent, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import fetchMarketDataByTickerThunk from './fetchMarketDataByTickerThunk';
+import {
+  globalSelectYahooFinanceDataLoading,
+  globalSelectYahooFinanceDataErrorMessage,
+} from './marketGraphSelectors';
 
 const MarketGraph: FC = () => {
+  const dispatch = useDispatch();
+  const yahooFinanceDataLoading = useSelector(
+    globalSelectYahooFinanceDataLoading
+  );
+  const yahooFinanceDataErrorMessage = useSelector(
+    globalSelectYahooFinanceDataErrorMessage
+  );
   const [tickerInput, setTickerInput] = useState('');
+
+  const handleTickerAdd = async (
+    event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    const asyncFunc = async () => {
+      try {
+        const ticker = tickerInput;
+        await dispatch(fetchMarketDataByTickerThunk(ticker));
+        setTickerInput('');
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    return asyncFunc();
+  };
 
   return (
     <div>
-      <form>
+      <form onSubmit={handleTickerAdd}>
         <label>
           Ticker to add:
           <input
@@ -24,7 +46,9 @@ const MarketGraph: FC = () => {
             }}
           />
         </label>
-        <input type="submit" value="Add" />
+        <input type="submit" value="Add" onSubmit={handleTickerAdd} />
+        {yahooFinanceDataLoading && <p>loading</p>}
+        {yahooFinanceDataErrorMessage && <p>{yahooFinanceDataErrorMessage}</p>}
       </form>
     </div>
   );

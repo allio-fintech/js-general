@@ -32,7 +32,37 @@ interface YahooFinanceQueryParams {
   '.tsrc'?: string;
 }
 
-const baseUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/';
+export interface YahooFinanceChartData {
+  meta: {
+    currency: string;
+    symbol: string;
+    exchangename: string;
+    instrumentType: string;
+    firstTradeDate: number;
+    timezone: string;
+    gmtoffset: number;
+    exchangeTimezoneName: string;
+    priceHint: number;
+    dataGranularity: string;
+    range: string;
+  };
+  timestamp: number[];
+  indicators: {
+    quote: {
+      open: number[];
+      high: number[];
+      volume: number[];
+      close: number[];
+      low: number[];
+    }[];
+    adjclose: {
+      adjclose: number[];
+    }[];
+  };
+}
+
+const baseUrl =
+  'https://cors-anywhere.herokuapp.com/query1.finance.yahoo.com/v8/finance/chart/';
 const defaultParams: YahooFinanceQueryParams = {
   range: YF_RANGE['1mo'],
   interval: YF_INTERVAL.daily,
@@ -40,6 +70,7 @@ const defaultParams: YahooFinanceQueryParams = {
   lang: 'en-US',
   includePrePost: false,
   '.tsrc': 'finance',
+  corsDomain: 'finance.yahoo.com',
 };
 
 const yahooFinanceMarketApi = {
@@ -54,7 +85,8 @@ const yahooFinanceMarketApi = {
       },
     });
     const { data } = await query;
-    const result = data?.chart?.result ?? undefined;
+    const result: undefined | YahooFinanceChartData[] =
+      data?.chart?.result ?? undefined;
     return result;
   },
 };
