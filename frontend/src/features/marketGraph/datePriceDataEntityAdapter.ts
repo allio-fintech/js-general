@@ -4,7 +4,7 @@ import { Decimal } from 'decimal.js';
 export interface DatePriceDatum {
   id: string;
   date: Date;
-  price: Decimal;
+  price: Decimal | null;
   assetType: string;
 }
 

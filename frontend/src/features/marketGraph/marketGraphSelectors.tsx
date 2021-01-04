@@ -19,6 +19,14 @@ export const globalSelectMarketGraphInitialDate = (
   state: GlobalMarketGraphState
 ) => state.marketGraph.initialDate;
 
+export const globalSelectMarketGraphFinalDate = (
+  state: GlobalMarketGraphState
+) => state.marketGraph.finalDate;
+
 export const globalSelectRawYahooFinanceData = (
   state: GlobalMarketGraphState
 ) => state.marketGraph.rawYahooFinanceData;
+
+export const globalSelectMarketGraphDisplayOptions = (
+  state: GlobalMarketGraphState
+) => state.marketGraph.graphDisplayOptions;

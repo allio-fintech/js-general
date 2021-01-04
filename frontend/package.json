@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "postinstall": "rm -rf node_modules/bizcharts/node_modules/react",
-    "dev": "next dev",
+    "dev": "next dev -p 5678",
     "build": "next build",
     "start": "next start",
     "export": "NODE_ENV=production npm run build && next export -o ../docs && touch ../docs/.nojekyll",

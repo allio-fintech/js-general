@@ -14,16 +14,22 @@ const rawYahooFinanceDataInitialState = rawYahooFinanceChartDataEntityAdapter.ge
   { loading: false, errorMessage: '' }
 );
 
-const assetDataInitialState = assetDataEntityAdapter.getInitialState();
-
 interface MarketGraphState {
   ticker: string;
   initialFund: number;
   initialDate: string;
+  finalDate: string;
   rawYahooFinanceData: typeof rawYahooFinanceDataInitialState;
   parsedMarketCloseData: EntityState<{
     assetType: string;
     data: EntityState<DatePriceDatum>;
+  }>;
+  graphDisplayOptions: EntityState<{
+    assetType: string;
+    data: {
+      show: boolean;
+      color: string;
+    };
   }>;
 }
 
@@ -35,10 +41,21 @@ const marketGraphSlice = createSlice({
   name: 'marketGraph',
   initialState: {
     rawYahooFinanceData: rawYahooFinanceDataInitialState,
-    parsedMarketCloseData: assetDataInitialState,
+    parsedMarketCloseData: assetDataEntityAdapter.getInitialState(),
     initialFund: 100,
     initialDate: '2010-01-01',
+    finalDate: '2020-12-01',
     ticker: '',
+    graphDisplayOptions: assetDataEntityAdapter.addOne(
+      assetDataEntityAdapter.getInitialState(),
+      {
+        assetType: 'Allio',
+        data: {
+          show: false,
+          color: 'navy',
+        },
+      }
+    ),
   } as MarketGraphState,
   reducers: {
     parseMarketCloseData(state, action: PayloadAction<YahooFinanceChartData>) {
@@ -56,7 +73,9 @@ const marketGraphSlice = createSlice({
           }
           const date = timestampToDate(ts);
           const dateString = approximateUTCDateString(date);
-          const price = new Decimal(indicators.quote[0].close[ind]);
+          const price =
+            indicators.quote[0].close[ind] &&
+            new Decimal(indicators.quote[0].close[ind]);
           return datePriceDataEntityAdapter.upsertOne(data, {
             assetType: ticker,
             id: dateString,
@@ -79,6 +98,30 @@ const marketGraphSlice = createSlice({
     },
     changeInitialDate(state, action: PayloadAction<string>) {
       state.initialDate = action.payload;
+    },
+    changeFinalDate(state, action: PayloadAction<string>) {
+      state.finalDate = action.payload;
+    },
+    addGraphDisplayOption(state, action: PayloadAction<string>) {
+      assetDataEntityAdapter.upsertOne(state.graphDisplayOptions, {
+        assetType: action.payload,
+        data: {
+          show: true,
+          color: 'black',
+        },
+      });
+    },
+    updateGraphDisplayOption(
+      state,
+      action: PayloadAction<{ assetType: string; show: boolean; color: string }>
+    ) {
+      assetDataEntityAdapter.upsertOne(state.graphDisplayOptions, {
+        assetType: action.payload.assetType,
+        data: {
+          show: action.payload.show,
+          color: action.payload.color,
+        },
+      });
     },
   },
   extraReducers: (builder) => {
@@ -106,6 +149,9 @@ export default marketGraphSlice.reducer;
 export const {
   parseMarketCloseData,
   changeInitialDate,
+  changeFinalDate,
   changeInitialFund,
   changeTicker,
+  addGraphDisplayOption,
+  updateGraphDisplayOption,
 } = marketGraphSlice.actions;

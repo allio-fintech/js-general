@@ -49,20 +49,20 @@ export interface YahooFinanceChartData {
   timestamp?: number[];
   indicators: {
     quote: {
-      open: number[];
-      high: number[];
-      volume: number[];
-      close: number[];
-      low: number[];
+      open: (number | null)[];
+      high: (number | null)[];
+      volume: (number | null)[];
+      close: (number | null)[];
+      low: (number | null)[];
     }[];
     adjclose: {
-      adjclose: number[];
+      adjclose: (number | null)[];
     }[];
   };
 }
 
-const baseUrl =
-  'https://cors-anywhere.herokuapp.com/query1.finance.yahoo.com/v8/finance/chart/';
+const proxy = 'http://localhost:8080';
+const baseUrl = `${proxy}/query1.finance.yahoo.com/v8/finance/chart/`;
 const defaultParams: YahooFinanceQueryParams = {
   range: YF_RANGE['1mo'],
   interval: YF_INTERVAL.daily,
@@ -70,7 +70,6 @@ const defaultParams: YahooFinanceQueryParams = {
   lang: 'en-US',
   includePrePost: false,
   '.tsrc': 'finance',
-  corsDomain: 'finance.yahoo.com',
 };
 
 const yahooFinanceMarketApi = {
