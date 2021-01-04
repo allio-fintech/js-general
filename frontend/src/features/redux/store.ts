@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { MakeStore, createWrapper } from 'next-redux-wrapper';
+import { createWrapper } from 'next-redux-wrapper';
 import { rootReducer, RootState } from './reducer';
 
-export const makeStore: MakeStore<RootState> = () => {
+export const makeStore = () => {
   const store = configureStore({
     reducer: rootReducer,
   });
@@ -13,5 +13,7 @@ export const makeStore: MakeStore<RootState> = () => {
 
   return store;
 };
+
+export type AppDispatch = ReturnType<typeof makeStore>['dispatch'];
 
 export const wrapper = createWrapper<RootState>(makeStore, { debug: true });

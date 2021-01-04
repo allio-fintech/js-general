@@ -1,3 +1,5 @@
+import { unwrapResult } from '@reduxjs/toolkit';
+import { AppDispatch } from 'features/redux/store';
 import { FC, FormEvent, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import fetchMarketDataByTickerThunk from './fetchMarketDataByTickerThunk';
@@ -5,9 +7,10 @@ import {
   globalSelectYahooFinanceDataLoading,
   globalSelectYahooFinanceDataErrorMessage,
 } from './marketGraphSelectors';
+import { parseMarketCloseData } from './marketGraphSlice';
 
 const MarketGraph: FC = () => {
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   const yahooFinanceDataLoading = useSelector(
     globalSelectYahooFinanceDataLoading
   );
@@ -21,9 +24,17 @@ const MarketGraph: FC = () => {
   ) => {
     event.preventDefault();
     const asyncFunc = async () => {
+      if (yahooFinanceDataLoading) {
+        return;
+      }
       try {
         const ticker = tickerInput;
-        await dispatch(fetchMarketDataByTickerThunk(ticker));
+        const response = await dispatch(fetchMarketDataByTickerThunk(ticker));
+        const chartData = unwrapResult(response);
+        if (!chartData.length) {
+          throw new Error('no chart data is fetched');
+        }
+        dispatch(parseMarketCloseData(chartData[0]));
         setTickerInput('');
       } catch (err) {
         console.error(err);

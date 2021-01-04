@@ -46,7 +46,7 @@ export interface YahooFinanceChartData {
     dataGranularity: string;
     range: string;
   };
-  timestamp: number[];
+  timestamp?: number[];
   indicators: {
     quote: {
       open: number[];
