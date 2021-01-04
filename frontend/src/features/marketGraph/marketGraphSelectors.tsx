@@ -30,3 +30,6 @@ export const globalSelectRawYahooFinanceData = (
 export const globalSelectMarketGraphDisplayOptions = (
   state: GlobalMarketGraphState
 ) => state.marketGraph.graphDisplayOptions;
+
+export const globalSelectAllioAllocation = (state: GlobalMarketGraphState) =>
+  state.marketGraph.allioAllocation;

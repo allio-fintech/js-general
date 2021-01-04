@@ -13,6 +13,7 @@ import {
   globalSelectRawYahooFinanceData,
   globalSelectMarketGraphDisplayOptions,
   globalSelectMarketGraphFinalDate,
+  globalSelectAllioAllocation,
 } from './marketGraphSelectors';
 import {
   addGraphDisplayOption,
@@ -22,6 +23,8 @@ import {
   changeTicker,
   parseMarketCloseData,
   updateGraphDisplayOption,
+  updateAllioAllocationProportion,
+  addAllioAllocationAsset,
 } from './marketGraphSlice';
 import rawYahooFinanceChartDataEntityAdapter from './rawYahooFinanceChartDataEntityAdapter';
 
@@ -34,6 +37,10 @@ const {
 const {
   selectAll: globalSelectMarketGraphDisplayOptionArray,
 } = assetDataEntityAdapter.getSelectors(globalSelectMarketGraphDisplayOptions);
+
+const {
+  selectEntities: globalSelectAllioAllocationEntities,
+} = assetDataEntityAdapter.getSelectors(globalSelectAllioAllocation);
 
 const MarketGraph: FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -53,6 +60,9 @@ const MarketGraph: FC = () => {
   const graphOptionArray = useSelector(
     globalSelectMarketGraphDisplayOptionArray
   );
+  const allioAllocationEntities = useSelector(
+    globalSelectAllioAllocationEntities
+  );
 
   const handleTickerAdd = async (
     event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
@@ -70,6 +80,7 @@ const MarketGraph: FC = () => {
         }
         dispatch(parseMarketCloseData(chartData[0]));
         dispatch(addGraphDisplayOption(ticker));
+        dispatch(addAllioAllocationAsset(ticker));
         dispatch(changeTicker(''));
       } catch (err) {
         console.error(err);
@@ -141,12 +152,17 @@ const MarketGraph: FC = () => {
       </form>
       <form>
         {graphOptionArray.map((graphOption) => {
-          const key = `${graphOption.assetType}-graph-option`;
-          const showId = `${graphOption.assetType}-show`;
-          const colorId = `${graphOption.assetType}-color`;
+          const { assetType } = graphOption;
+          const allioAllocation = allioAllocationEntities[assetType];
+          const graphOptionId = `${assetType}-graph-option`;
+          const showId = `${assetType}-show`;
+          const colorId = `${assetType}-color`;
+          const allioAllocationId = `${assetType}-allio-allocation`;
+          const numeratorId = `${assetType}-numerator`;
+          const denominatorId = `${assetType}-denominator`;
           return (
-            <Fragment key={key}>
-              <div>{graphOption.assetType}</div>
+            <Fragment key={graphOptionId}>
+              <div>{assetType}</div>
               <input
                 type="checkbox"
                 id={showId}
@@ -155,7 +171,7 @@ const MarketGraph: FC = () => {
                 onChange={(event) => {
                   dispatch(
                     updateGraphDisplayOption({
-                      assetType: graphOption.assetType,
+                      assetType,
                       show: event.target.checked,
                       color: graphOption.data.color,
                     })
@@ -170,11 +186,12 @@ const MarketGraph: FC = () => {
                   type="text"
                   id={colorId}
                   name={colorId}
+                  disabled={!graphOption.data.show}
                   value={graphOption.data.color}
                   onChange={(event) => {
                     dispatch(
                       updateGraphDisplayOption({
-                        assetType: graphOption.assetType,
+                        assetType,
                         show: graphOption.data.show,
                         color: event.target.value,
                       })
@@ -182,6 +199,45 @@ const MarketGraph: FC = () => {
                   }}
                 />
               </label>
+              {allioAllocation && (
+                <Fragment key={allioAllocationId}>
+                  <br />
+                  <label>
+                    Allio Allocation:
+                    <input
+                      type="text"
+                      id={numeratorId}
+                      name={numeratorId}
+                      value={allioAllocation.data.numerator}
+                      onChange={(event) => {
+                        dispatch(
+                          updateAllioAllocationProportion({
+                            assetType,
+                            numerator: event.target.value,
+                            denominator: allioAllocation.data.denominator,
+                          })
+                        );
+                      }}
+                    />
+                    /
+                    <input
+                      type="text"
+                      id={denominatorId}
+                      name={denominatorId}
+                      value={allioAllocation.data.denominator}
+                      onChange={(event) => {
+                        dispatch(
+                          updateAllioAllocationProportion({
+                            assetType,
+                            numerator: allioAllocation.data.numerator,
+                            denominator: event.target.value,
+                          })
+                        );
+                      }}
+                    />
+                  </label>
+                </Fragment>
+              )}
             </Fragment>
           );
         })}

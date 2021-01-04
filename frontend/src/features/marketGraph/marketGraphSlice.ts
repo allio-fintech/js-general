@@ -31,6 +31,14 @@ interface MarketGraphState {
       color: string;
     };
   }>;
+  allioAllocation: EntityState<{
+    assetType: string;
+    data: {
+      numerator: string | void;
+      denominator: string | void;
+      proportion: Decimal;
+    };
+  }>;
 }
 
 export interface GlobalMarketGraphState {
@@ -56,6 +64,7 @@ const marketGraphSlice = createSlice({
         },
       }
     ),
+    allioAllocation: assetDataEntityAdapter.getInitialState(),
   } as MarketGraphState,
   reducers: {
     parseMarketCloseData(state, action: PayloadAction<YahooFinanceChartData>) {
@@ -115,11 +124,57 @@ const marketGraphSlice = createSlice({
       state,
       action: PayloadAction<{ assetType: string; show: boolean; color: string }>
     ) {
-      assetDataEntityAdapter.upsertOne(state.graphDisplayOptions, {
-        assetType: action.payload.assetType,
+      assetDataEntityAdapter.updateOne(state.graphDisplayOptions, {
+        id: action.payload.assetType,
+        changes: {
+          data: {
+            show: action.payload.show,
+            color: action.payload.color,
+          },
+        },
+      });
+    },
+    addAllioAllocationAsset(state, action: PayloadAction<string>) {
+      assetDataEntityAdapter.upsertOne(state.allioAllocation, {
+        assetType: action.payload,
         data: {
-          show: action.payload.show,
-          color: action.payload.color,
+          numerator: '0',
+          denominator: '1',
+          proportion: new Decimal(0),
+        },
+      });
+      state.allioAllocation.ids.forEach((assetType: string) => {
+        const totalNumber = state.allioAllocation.ids.length;
+        assetDataEntityAdapter.updateOne(state.allioAllocation, {
+          id: assetType,
+          changes: {
+            data: {
+              numerator: '1',
+              denominator: totalNumber.toString(),
+              proportion: new Decimal(1).dividedBy(totalNumber),
+            },
+          },
+        });
+      });
+    },
+    updateAllioAllocationProportion(
+      state,
+      action: PayloadAction<{
+        assetType: string;
+        numerator: string | void;
+        denominator: string | void;
+      }>
+    ) {
+      const numerator = action.payload.numerator || '0';
+      const denominator = action.payload.denominator || '1';
+      assetDataEntityAdapter.updateOne(state.allioAllocation, {
+        id: action.payload.assetType,
+        changes: {
+          data: {
+            numerator,
+            denominator,
+            proportion: new Decimal(numerator).dividedBy(denominator),
+          },
         },
       });
     },
@@ -154,4 +209,6 @@ export const {
   changeTicker,
   addGraphDisplayOption,
   updateGraphDisplayOption,
+  addAllioAllocationAsset,
+  updateAllioAllocationProportion,
 } = marketGraphSlice.actions;
