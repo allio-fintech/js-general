@@ -7,3 +7,14 @@ export const globalSelectYahooFinanceDataLoading = (
 export const globalSelectYahooFinanceDataErrorMessage = (
   state: GlobalMarketGraphState
 ) => state.marketGraph.rawYahooFinanceData.errorMessage;
+
+export const globalSelectMarketGraphTicker = (state: GlobalMarketGraphState) =>
+  state.marketGraph.ticker;
+
+export const globalSelectMarketGraphInitialFund = (
+  state: GlobalMarketGraphState
+) => state.marketGraph.initialFund;
+
+export const globalSelectMarketGraphInitialDate = (
+  state: GlobalMarketGraphState
+) => state.marketGraph.initialDate;

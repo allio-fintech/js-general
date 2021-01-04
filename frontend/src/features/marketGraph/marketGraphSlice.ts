@@ -17,6 +17,9 @@ const rawYahooFinanceDataInitialState = rawYahooFinanceChartDataEntityAdapter.ge
 const assetDataInitialState = assetDataEntityAdapter.getInitialState();
 
 interface MarketGraphState {
+  ticker: string;
+  initialFund: number;
+  initialDate: string;
   rawYahooFinanceData: typeof rawYahooFinanceDataInitialState;
   parsedMarketCloseData: EntityState<{
     assetType: string;
@@ -33,6 +36,9 @@ const marketGraphSlice = createSlice({
   initialState: {
     rawYahooFinanceData: rawYahooFinanceDataInitialState,
     parsedMarketCloseData: assetDataInitialState,
+    initialFund: 100,
+    initialDate: '2010-01-01',
+    ticker: '',
   } as MarketGraphState,
   reducers: {
     parseMarketCloseData(state, action: PayloadAction<YahooFinanceChartData>) {
@@ -65,6 +71,15 @@ const marketGraphSlice = createSlice({
         data: datePriceData,
       });
     },
+    changeTicker(state, action: PayloadAction<string>) {
+      state.ticker = action.payload;
+    },
+    changeInitialFund(state, action: PayloadAction<number>) {
+      state.initialFund = action.payload;
+    },
+    changeInitialDate(state, action: PayloadAction<string>) {
+      state.initialDate = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchMarketDataByTickerThunk.fulfilled, (state, action) => {
@@ -88,4 +103,9 @@ const marketGraphSlice = createSlice({
 });
 
 export default marketGraphSlice.reducer;
-export const { parseMarketCloseData } = marketGraphSlice.actions;
+export const {
+  parseMarketCloseData,
+  changeInitialDate,
+  changeInitialFund,
+  changeTicker,
+} = marketGraphSlice.actions;
