@@ -9,6 +9,7 @@ import {
   globalSelectMarketGraphTicker,
   globalSelectMarketGraphInitialDate,
   globalSelectMarketGraphInitialFund,
+  globalSelectRawYahooFinanceData,
 } from './marketGraphSelectors';
 import {
   changeInitialDate,
@@ -16,6 +17,13 @@ import {
   changeTicker,
   parseMarketCloseData,
 } from './marketGraphSlice';
+import rawYahooFinanceChartDataEntityAdapter from './rawYahooFinanceChartDataEntityAdapter';
+
+const {
+  selectEntities: globalSelectRawYahooFinanceEntities,
+} = rawYahooFinanceChartDataEntityAdapter.getSelectors(
+  globalSelectRawYahooFinanceData
+);
 
 const MarketGraph: FC = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -28,13 +36,16 @@ const MarketGraph: FC = () => {
   const ticker = useSelector(globalSelectMarketGraphTicker);
   const initialDate = useSelector(globalSelectMarketGraphInitialDate);
   const initialFund = useSelector(globalSelectMarketGraphInitialFund);
+  const rawYahooFinanceEntities = useSelector(
+    globalSelectRawYahooFinanceEntities
+  );
 
   const handleTickerAdd = async (
     event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
     const asyncFunc = async () => {
-      if (yahooFinanceDataLoading) {
+      if (yahooFinanceDataLoading || rawYahooFinanceEntities[ticker]) {
         return;
       }
       try {
