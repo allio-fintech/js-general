@@ -68,28 +68,26 @@ const MarketGraph: FC = () => {
     event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
-    const asyncFunc = async () => {
-      if (yahooFinanceDataLoading || rawYahooFinanceEntities[ticker]) {
-        return;
+
+    if (yahooFinanceDataLoading || rawYahooFinanceEntities[ticker]) {
+      return;
+    }
+    try {
+      const response = await dispatch(fetchMarketDataByTickerThunk(ticker));
+      const chartData = unwrapResult(response);
+      if (!chartData.length) {
+        throw new Error('no chart data is fetched');
       }
-      try {
-        const response = await dispatch(fetchMarketDataByTickerThunk(ticker));
-        const chartData = unwrapResult(response);
-        if (!chartData.length) {
-          throw new Error('no chart data is fetched');
-        }
-        dispatch(parseMarketCloseData(chartData[0]));
-        dispatch(addGraphDisplayOption(ticker));
-        dispatch(addAllioAllocationAsset(ticker));
-        dispatch(changeTicker(''));
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    return asyncFunc();
+      dispatch(parseMarketCloseData(chartData[0]));
+      dispatch(addGraphDisplayOption(ticker));
+      dispatch(addAllioAllocationAsset(ticker));
+      dispatch(changeTicker(''));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleInitialDataApply = async (
+  const handleGenerateGraphTrigger = async (
     event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
@@ -113,7 +111,7 @@ const MarketGraph: FC = () => {
         {yahooFinanceDataLoading && <p>loading</p>}
         {yahooFinanceDataErrorMessage && <p>{yahooFinanceDataErrorMessage}</p>}
       </form>
-      <form onSubmit={handleInitialDataApply}>
+      <form onSubmit={handleGenerateGraphTrigger}>
         <label>
           Initial Fund:
           <input
@@ -148,9 +146,12 @@ const MarketGraph: FC = () => {
             }}
           />
         </label>
-        <input type="submit" value="Apply" onSubmit={handleInitialDataApply} />
-      </form>
-      <form>
+        <input
+          type="submit"
+          value="Generate Grpah"
+          onSubmit={handleGenerateGraphTrigger}
+        />
+        <br />
         {graphOptionArray.map((graphOption) => {
           const { assetType } = graphOption;
           const allioAllocation = allioAllocationEntities[assetType];

@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { Chart, Line, Tooltip, Legend, GComponents } from 'bizcharts';
+import { Chart, Line, Tooltip, Legend } from 'bizcharts';
 import { css } from '@emotion/react';
 import rem from 'utils/styles/rem';
 

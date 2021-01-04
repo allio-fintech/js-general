@@ -24,6 +24,7 @@ interface MarketGraphState {
     assetType: string;
     data: EntityState<DatePriceDatum>;
   }>;
+  marketGraphData: EntityState<DatePriceDatum>;
   graphDisplayOptions: EntityState<{
     assetType: string;
     data: {
@@ -65,6 +66,7 @@ const marketGraphSlice = createSlice({
       }
     ),
     allioAllocation: assetDataEntityAdapter.getInitialState(),
+    marketGraphData: datePriceDataEntityAdapter.getInitialState(),
   } as MarketGraphState,
   reducers: {
     parseMarketCloseData(state, action: PayloadAction<YahooFinanceChartData>) {
@@ -178,6 +180,9 @@ const marketGraphSlice = createSlice({
         },
       });
     },
+    generateMarketGraphData() {
+      // datePriceDataEntityAdapter.removeAll(state.marketGraphData);
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchMarketDataByTickerThunk.fulfilled, (state, action) => {
@@ -211,4 +216,5 @@ export const {
   updateGraphDisplayOption,
   addAllioAllocationAsset,
   updateAllioAllocationProportion,
+  generateMarketGraphData,
 } = marketGraphSlice.actions;

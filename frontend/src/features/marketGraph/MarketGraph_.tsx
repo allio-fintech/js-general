@@ -187,7 +187,7 @@ const generateCsvUrl = ({
     csvStringifier.end();
   });
 
-const DynamicGraph = dynamic(() => import('./Graph'), { ssr: false });
+const DynamicGraph = dynamic(() => import('./Graph_'), { ssr: false });
 
 const MarketGraph: FC = () => {
   const [csvUrl, setCsvUrl] = useState('');
