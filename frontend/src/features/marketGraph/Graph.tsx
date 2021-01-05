@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import { Chart, Line, Tooltip, Legend } from 'bizcharts';
+import Decimal from 'decimal.js';
 import { css } from '@emotion/react';
 import rem from 'utils/styles/rem';
 
@@ -28,7 +29,7 @@ const Graph: FC<GraphProps> = ({ data, colors }) => (
           callback: (assetType, price) => {
             return {
               name: assetType,
-              value: price.toFixed(2),
+              value: new Decimal(price).toFixed(2),
             };
           },
         }}

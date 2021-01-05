@@ -5,7 +5,6 @@ import { rootReducer, RootState } from './reducer';
 export const makeStore = () => {
   const store = configureStore({
     reducer: rootReducer,
-    devTools: false,
   });
 
   if (process.env.NODE_ENV !== 'production' && module?.hot) {

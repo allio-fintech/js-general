@@ -45,7 +45,7 @@ interface MarketGraphState {
     data: {
       numerator: string | void;
       denominator: string | void;
-      proportion: Decimal;
+      proportion: string;
     };
   }>;
 }
@@ -98,7 +98,7 @@ const marketGraphSlice = createSlice({
           const dateString = approximateUTCDateString(date);
           const price =
             indicators.quote[0].close[ind] &&
-            new Decimal(indicators.quote[0].close[ind]);
+            new Decimal(indicators.quote[0].close[ind]).toString();
           return datePriceDataEntityAdapter.upsertOne(data, {
             assetType: ticker,
             id: dateString,
@@ -160,7 +160,7 @@ const marketGraphSlice = createSlice({
         data: {
           numerator: '0',
           denominator: '1',
-          proportion: new Decimal(0),
+          proportion: '0',
         },
       });
       state.allioAllocation.ids.forEach((assetType: string) => {
@@ -171,7 +171,7 @@ const marketGraphSlice = createSlice({
             data: {
               numerator: '1',
               denominator: totalNumber.toString(),
-              proportion: new Decimal(1).dividedBy(totalNumber),
+              proportion: new Decimal(1).dividedBy(totalNumber).toString(),
             },
           },
         });
@@ -193,7 +193,9 @@ const marketGraphSlice = createSlice({
           data: {
             numerator,
             denominator,
-            proportion: new Decimal(numerator).dividedBy(denominator),
+            proportion: new Decimal(numerator)
+              .dividedBy(denominator)
+              .toString(),
           },
         },
       });
@@ -221,14 +223,16 @@ const marketGraphSlice = createSlice({
               return;
             }
             if (!ratio[assetType]) {
-              ratio[assetType] = new Decimal(state.initialFund)
-                // @ts-ignore
-                .dividedBy(parsedAssetDatum.price);
+              ratio[assetType] = new Decimal(state.initialFund).dividedBy(
+                parsedAssetDatum.price
+              );
             }
-            const price = parsedAssetDatum.price.times(ratio[assetType]);
+            const price = new Decimal(parsedAssetDatum.price).times(
+              ratio[assetType]
+            );
             intermediateData[parsedAssetDatum.date] = {
               ...intermediateData[parsedAssetDatum.date],
-              // @ts-ignore
+
               [assetType]: price,
             };
             if (!state.graphDisplayOptions.entities[assetType].data.show) {
@@ -240,7 +244,7 @@ const marketGraphSlice = createSlice({
                 assetType: assetType.toString(),
                 date: parsedAssetDatum.date,
                 id: `${assetType}-${parsedAssetDatum.id}`,
-                price,
+                price: price.toNumber(),
               }
             );
           }
@@ -255,7 +259,7 @@ const marketGraphSlice = createSlice({
           const price = intermediateData[dateString][assetType];
           const { proportion } = state.allioAllocation.entities[assetType].data;
           datum[assetType] = price.toFixed(2);
-          // @ts-ignore
+
           totalPrice = totalPrice.plus(price.times(proportion));
         });
         if (state.graphDisplayOptions.entities[ALLIO_ASSET_TYPE].data.show) {
@@ -263,7 +267,7 @@ const marketGraphSlice = createSlice({
             assetType: ALLIO_ASSET_TYPE,
             date: dateString,
             id: `${ALLIO_ASSET_TYPE}-${dateString}`,
-            price: totalPrice,
+            price: totalPrice.toNumber(),
           });
           datum[ALLIO_ASSET_TYPE] = totalPrice.toFixed(2);
         }

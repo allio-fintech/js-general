@@ -145,9 +145,10 @@ const MarketGraph: FC = () => {
       if (!chartData.length) {
         throw new Error('no chart data is fetched');
       }
+      const { symbol } = chartData[0].meta;
       dispatch(parseMarketCloseData(chartData[0]));
-      dispatch(addGraphDisplayOption(ticker));
-      dispatch(addAllioAllocationAsset(ticker));
+      dispatch(addGraphDisplayOption(symbol));
+      dispatch(addAllioAllocationAsset(symbol));
       dispatch(changeTicker(''));
     } catch (err) {
       console.error(err);

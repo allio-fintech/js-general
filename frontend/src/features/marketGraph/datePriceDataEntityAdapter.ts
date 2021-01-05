@@ -1,10 +1,9 @@
 import { createEntityAdapter } from '@reduxjs/toolkit';
-import { Decimal } from 'decimal.js';
 
 export interface DatePriceDatum {
   id: string;
   date: string;
-  price: Decimal;
+  price: string | number;
   assetType: string;
 }
 
