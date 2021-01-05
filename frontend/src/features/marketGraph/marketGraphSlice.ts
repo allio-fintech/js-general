@@ -38,6 +38,7 @@ interface MarketGraphState {
     data: {
       show: boolean;
       color: string;
+      editColor: boolean;
     };
   }>;
   allioAllocation: EntityState<{
@@ -70,6 +71,7 @@ const marketGraphSlice = createSlice({
         data: {
           show: false,
           color: 'navy',
+          editColor: false,
         },
       }
     ),
@@ -137,6 +139,7 @@ const marketGraphSlice = createSlice({
                 presetColors.length - 1
               )
             ],
+          editColor: false,
         },
       });
     },
@@ -150,6 +153,23 @@ const marketGraphSlice = createSlice({
           data: {
             show: action.payload.show,
             color: action.payload.color,
+            editColor:
+              state.graphDisplayOptions.entities[action.payload.assetType].data
+                .editColor,
+          },
+        },
+      });
+    },
+    toggleEditColor(state, action: PayloadAction<string>) {
+      const existingGraphOptionData =
+        state.graphDisplayOptions.entities[action.payload].data;
+      assetDataEntityAdapter.updateOne(state.graphDisplayOptions, {
+        id: action.payload,
+        changes: {
+          data: {
+            editColor: !existingGraphOptionData.editColor,
+            show: existingGraphOptionData.show,
+            color: existingGraphOptionData.color,
           },
         },
       });
@@ -326,4 +346,5 @@ export const {
   addAllioAllocationAsset,
   updateAllioAllocationProportion,
   generateMarketGraphData,
+  toggleEditColor,
 } = marketGraphSlice.actions;

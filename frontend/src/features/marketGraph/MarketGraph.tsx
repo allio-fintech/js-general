@@ -1,8 +1,9 @@
 import { unwrapResult } from '@reduxjs/toolkit';
 import { AppDispatch } from 'features/redux/store';
-import { FC, FormEvent, Fragment } from 'react';
+import { FC, FormEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import dynamic from 'next/dynamic';
+import { SketchPicker } from 'react-color';
 import { css } from '@emotion/react';
 import rem from 'utils/styles/rem';
 import transition from 'utils/styles/transition';
@@ -33,6 +34,7 @@ import {
   updateAllioAllocationProportion,
   addAllioAllocationAsset,
   generateMarketGraphData,
+  toggleEditColor,
 } from './marketGraphSlice';
 import rawYahooFinanceChartDataEntityAdapter from './rawYahooFinanceChartDataEntityAdapter';
 import datePriceDataEntityAdapter from './datePriceDataEntityAdapter';
@@ -78,6 +80,52 @@ const downloadLinkStyles = css`
   &:hover {
     color: blue;
   }
+`;
+
+const buttonBackgroundColor = ({
+  color,
+  disabled,
+}: {
+  color: string;
+  disabled?: boolean;
+}) => css`
+  border-color: ${color};
+  border-radius: ${rem(1)};
+  padding: ${rem(2)};
+  margin: 0;
+
+  &:hover {
+    background-color: ${disabled ? 'initial' : color};
+    ${disabled ? 'color: lightgray' : ''};
+    box-shadow: initial;
+  }
+
+  &:active {
+    background-color: white;
+  }
+`;
+
+const graphOptionBlockStyles = css`
+  display: flex;
+  flex-flow: row nowrap;
+  overflow-x: auto;
+`;
+
+const graphOptionDivStyles = css`
+  display: flex;
+  flex-flow: column nowrap;
+  max-width: ${rem(60)};
+  align-items: center;
+  margin: 0 ${rem(10)};
+
+  &.* {
+    display: block;
+  }
+`;
+
+const fractionInputStyles = css`
+  display: inline-block;
+  width: ${rem(20)};
 `;
 
 const {
@@ -217,96 +265,132 @@ const MarketGraph: FC = () => {
           />
         </label>
         <br />
-        {graphOptionArray.map((graphOption) => {
-          const { assetType } = graphOption;
-          const allioAllocation = allioAllocationEntities[assetType];
-          const graphOptionId = `${assetType}-graph-option`;
-          const showId = `${assetType}-show`;
-          const colorId = `${assetType}-color`;
-          const allioAllocationId = `${assetType}-allio-allocation`;
-          const numeratorId = `${assetType}-numerator`;
-          const denominatorId = `${assetType}-denominator`;
-          return (
-            <Fragment key={graphOptionId}>
-              <div>{assetType}</div>
-              <input
-                type="checkbox"
-                id={showId}
-                name={showId}
-                checked={graphOption.data.show}
-                onChange={(event) => {
-                  dispatch(
-                    updateGraphDisplayOption({
-                      assetType,
-                      show: event.target.checked,
-                      color: graphOption.data.color,
-                    })
-                  );
-                }}
-              />
-              <label htmlFor={showId}>show</label>
-              <br />
-              <label>
-                color:
-                <input
-                  type="text"
-                  id={colorId}
-                  name={colorId}
-                  disabled={!graphOption.data.show}
-                  value={graphOption.data.color}
-                  onChange={(event) => {
-                    dispatch(
-                      updateGraphDisplayOption({
-                        assetType,
-                        show: graphOption.data.show,
-                        color: event.target.value,
-                      })
-                    );
-                  }}
-                />
-              </label>
-              {allioAllocation && (
-                <Fragment key={allioAllocationId}>
-                  <br />
-                  <label>
-                    Allio Allocation:
-                    <input
-                      type="text"
-                      id={numeratorId}
-                      name={numeratorId}
-                      value={allioAllocation.data.numerator}
-                      onChange={(event) => {
+        <div css={graphOptionBlockStyles}>
+          {graphOptionArray.map((graphOption) => {
+            const { assetType } = graphOption;
+            const allioAllocation = allioAllocationEntities[assetType];
+            const graphOptionId = `${assetType}-graph-option`;
+            const showId = `${assetType}-show`;
+            const allioAllocationId = `${assetType}-allio-allocation`;
+            const numeratorId = `${assetType}-numerator`;
+            const denominatorId = `${assetType}-denominator`;
+            return (
+              <div key={graphOptionId} css={graphOptionDivStyles}>
+                <div>{assetType}</div>
+                <label>
+                  <input
+                    type="checkbox"
+                    id={showId}
+                    name={showId}
+                    checked={graphOption.data.show}
+                    onChange={(event) => {
+                      dispatch(
+                        updateGraphDisplayOption({
+                          assetType,
+                          show: event.target.checked,
+                          color: graphOption.data.color,
+                        })
+                      );
+                    }}
+                  />
+                  show
+                </label>
+                {!graphOption.data.editColor && (
+                  <button
+                    css={[
+                      buttonStyles,
+                      buttonBackgroundColor({
+                        color: graphOption.data.color,
+                        disabled: !graphOption.data.show,
+                      }),
+                    ]}
+                    type="button"
+                    disabled={!graphOption.data.show}
+                    onClick={() => {
+                      dispatch(toggleEditColor(assetType));
+                    }}
+                  >
+                    color
+                  </button>
+                )}
+                {graphOption.data.editColor && (
+                  <>
+                    <button
+                      css={[
+                        buttonStyles,
+                        buttonBackgroundColor({
+                          color: graphOption.data.color,
+                        }),
+                      ]}
+                      type="button"
+                      onClick={() => {
+                        dispatch(toggleEditColor(assetType));
+                      }}
+                    >
+                      done
+                    </button>
+                    <SketchPicker
+                      css={css`
+                        align-self: flex-start;
+                        display: float;
+                      `}
+                      color={graphOption.data.color}
+                      onChangeComplete={(color) => {
                         dispatch(
-                          updateAllioAllocationProportion({
+                          updateGraphDisplayOption({
                             assetType,
-                            numerator: event.target.value,
-                            denominator: allioAllocation.data.denominator,
+                            show: graphOption.data.show,
+                            color: color.hex,
                           })
                         );
                       }}
                     />
-                    /
-                    <input
-                      type="text"
-                      id={denominatorId}
-                      name={denominatorId}
-                      value={allioAllocation.data.denominator}
-                      onChange={(event) => {
-                        dispatch(
-                          updateAllioAllocationProportion({
-                            assetType,
-                            numerator: allioAllocation.data.numerator,
-                            denominator: event.target.value,
-                          })
-                        );
-                      }}
-                    />
-                  </label>
-                </Fragment>
-              )}
-            </Fragment>
-          );
-        })}
+                  </>
+                )}
+                {allioAllocation && (
+                  <div key={allioAllocationId}>
+                    <label>
+                      Allocation:
+                      <input
+                        css={fractionInputStyles}
+                        type="text"
+                        id={numeratorId}
+                        name={numeratorId}
+                        value={allioAllocation.data.numerator}
+                        onChange={(event) => {
+                          dispatch(
+                            updateAllioAllocationProportion({
+                              assetType,
+                              numerator: event.target.value,
+                              denominator: allioAllocation.data.denominator,
+                            })
+                          );
+                        }}
+                      />
+                      /
+                      <input
+                        css={fractionInputStyles}
+                        type="text"
+                        id={denominatorId}
+                        name={denominatorId}
+                        value={allioAllocation.data.denominator}
+                        onChange={(event) => {
+                          dispatch(
+                            updateAllioAllocationProportion({
+                              assetType,
+                              numerator: allioAllocation.data.numerator,
+                              denominator: event.target.value,
+                            })
+                          );
+                        }}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
         <br />
         <input
           css={buttonStyles}
