@@ -61,8 +61,8 @@ export interface YahooFinanceChartData {
   };
 }
 
-const proxy = 'http://localhost:8080';
-const baseUrl = `${proxy}/query1.finance.yahoo.com/v8/finance/chart/`;
+const proxy = process.env.NEXT_PUBLIC_CORS_PROXY;
+const baseUrl = `${proxy}query1.finance.yahoo.com/v8/finance/chart/`;
 const defaultParams: YahooFinanceQueryParams = {
   range: YF_RANGE['1mo'],
   interval: YF_INTERVAL.daily,
