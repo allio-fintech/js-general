@@ -123,6 +123,14 @@ const graphOptionDivStyles = css`
   }
 `;
 
+const colorPickerContainerStyles = css`
+  align-self: flex-start;
+`;
+
+const colorPickerStyles = css`
+  position: fixed;
+`;
+
 const fractionInputStyles = css`
   display: inline-block;
   width: ${rem(20)};
@@ -329,22 +337,21 @@ const MarketGraph: FC = () => {
                     >
                       done
                     </button>
-                    <SketchPicker
-                      css={css`
-                        align-self: flex-start;
-                        display: float;
-                      `}
-                      color={graphOption.data.color}
-                      onChangeComplete={(color) => {
-                        dispatch(
-                          updateGraphDisplayOption({
-                            assetType,
-                            show: graphOption.data.show,
-                            color: color.hex,
-                          })
-                        );
-                      }}
-                    />
+                    <div css={colorPickerContainerStyles}>
+                      <SketchPicker
+                        css={colorPickerStyles}
+                        color={graphOption.data.color}
+                        onChangeComplete={(color) => {
+                          dispatch(
+                            updateGraphDisplayOption({
+                              assetType,
+                              show: graphOption.data.show,
+                              color: color.hex,
+                            })
+                          );
+                        }}
+                      />
+                    </div>
                   </>
                 )}
                 {allioAllocation && (
