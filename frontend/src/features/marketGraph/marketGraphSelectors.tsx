@@ -36,3 +36,6 @@ export const globalSelectAllioAllocation = (state: GlobalMarketGraphState) =>
 
 export const globalSelectMarketGraphCsvUrl = (state: GlobalMarketGraphState) =>
   state.marketGraph.marketGraphData.csvUrl;
+
+export const globalSelectMarketGraphData = (state: GlobalMarketGraphState) =>
+  state.marketGraph.marketGraphData;

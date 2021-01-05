@@ -2,8 +2,10 @@ import { unwrapResult } from '@reduxjs/toolkit';
 import { AppDispatch } from 'features/redux/store';
 import { FC, FormEvent, Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import dynamic from 'next/dynamic';
 import { css } from '@emotion/react';
 import rem from 'utils/styles/rem';
+import transition from 'utils/styles/transition';
 import assetDataEntityAdapter from './assetDataEntityAdapter';
 import fetchMarketDataByTickerThunk from './fetchMarketDataByTickerThunk';
 import generateCsvUrlThrunk from './generateCsvUrlThrunk';
@@ -18,6 +20,7 @@ import {
   globalSelectMarketGraphFinalDate,
   globalSelectAllioAllocation,
   globalSelectMarketGraphCsvUrl,
+  globalSelectMarketGraphData,
 } from './marketGraphSelectors';
 import {
   addGraphDisplayOption,
@@ -32,12 +35,41 @@ import {
   generateMarketGraphData,
 } from './marketGraphSlice';
 import rawYahooFinanceChartDataEntityAdapter from './rawYahooFinanceChartDataEntityAdapter';
+import datePriceDataEntityAdapter from './datePriceDataEntityAdapter';
+
+const buttonStyles = css`
+  padding: ${rem(4)} ${rem(8)};
+  border-radius: ${rem(10)};
+  cursor: pointer;
+  border: ${rem(2)} solid #4caf50;
+  ${transition(100)('all')};
+  font-size: ${rem(16)};
+  margin: ${rem(10)} ${rem(20)};
+  outline: None;
+
+  &:hover {
+    background-color: #4caf50;
+    color: white;
+    box-shadow: 0 ${rem(12)} ${rem(16)} 0 rgba(0, 0, 0, 0.24),
+      0 ${rem(17)} ${rem(50)} 0 rgba(0, 0, 0, 0.19);
+  }
+
+  &:active {
+    background-color: white;
+    color: black;
+    box-shadow: 0 ${rem(3)} ${rem(4)} 0 rgba(0, 0, 0, 0.24),
+      0 ${rem(4)} ${rem(13)} 0 rgba(0, 0, 0, 0.19);
+  }
+`;
 
 const downloadLinkStyles = css`
+  display: block;
+  max-width: ${rem(150)};
   border: ${rem(2)} dotted black;
   padding: ${rem(4)} ${rem(8)};
   font-size: ${rem(16)};
-  margin: ${rem(10)} ${rem(20)};
+  margin: ${rem(10)} auto;
+  text-align: center;
 
   &:link {
     color: black;
@@ -62,6 +94,12 @@ const {
   selectEntities: globalSelectAllioAllocationEntities,
 } = assetDataEntityAdapter.getSelectors(globalSelectAllioAllocation);
 
+const {
+  selectAll: globalSelectMarketGraphDataArray,
+} = datePriceDataEntityAdapter.getSelectors(globalSelectMarketGraphData);
+
+const DynamicGraph = dynamic(() => import('./Graph'), { ssr: false });
+
 const MarketGraph: FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const yahooFinanceDataLoading = useSelector(
@@ -80,10 +118,18 @@ const MarketGraph: FC = () => {
   const graphOptionArray = useSelector(
     globalSelectMarketGraphDisplayOptionArray
   );
+  const colors = graphOptionArray.reduce<Record<string, string>>(
+    (accu, graphOption) => ({
+      ...accu,
+      [graphOption.assetType]: graphOption.data.color,
+    }),
+    {}
+  );
   const allioAllocationEntities = useSelector(
     globalSelectAllioAllocationEntities
   );
   const csvUrl = useSelector(globalSelectMarketGraphCsvUrl);
+  const marketGraphDataArray = useSelector(globalSelectMarketGraphDataArray);
 
   const handleTickerAdd = async (
     event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
@@ -169,17 +215,6 @@ const MarketGraph: FC = () => {
             }}
           />
         </label>
-        <br />
-        <input
-          type="submit"
-          value="Generate Grpah"
-          onSubmit={handleGenerateGraphTrigger}
-        />
-        {csvUrl && (
-          <a css={downloadLinkStyles} download="assetData.csv" href={csvUrl}>
-            Download CSV
-          </a>
-        )}
         <br />
         {graphOptionArray.map((graphOption) => {
           const { assetType } = graphOption;
@@ -271,7 +306,20 @@ const MarketGraph: FC = () => {
             </Fragment>
           );
         })}
+        <br />
+        <input
+          css={buttonStyles}
+          type="submit"
+          value="Generate Grpah"
+          onSubmit={handleGenerateGraphTrigger}
+        />
       </form>
+      <DynamicGraph data={marketGraphDataArray} colors={colors} />
+      {csvUrl && (
+        <a css={downloadLinkStyles} download="assetData.csv" href={csvUrl}>
+          Download CSV
+        </a>
+      )}
     </div>
   );
 };

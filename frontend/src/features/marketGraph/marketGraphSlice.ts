@@ -2,6 +2,7 @@ import { createSlice, EntityState, PayloadAction } from '@reduxjs/toolkit';
 import { Decimal } from 'decimal.js';
 import { approximateUTCDateString, timestampToDate } from 'features/date/util';
 import { YahooFinanceChartData } from 'features/marketHistoryQuery/yahooFinanceMarketApi';
+import { presetColors } from 'utils/styles/colors';
 import datePriceDataEntityAdapter, {
   DatePriceDatum,
 } from './datePriceDataEntityAdapter';
@@ -129,7 +130,13 @@ const marketGraphSlice = createSlice({
         assetType: action.payload,
         data: {
           show: true,
-          color: 'black',
+          color:
+            presetColors[
+              Math.min(
+                state.parsedMarketCloseData.ids.length,
+                presetColors.length - 1
+              )
+            ],
         },
       });
     },
