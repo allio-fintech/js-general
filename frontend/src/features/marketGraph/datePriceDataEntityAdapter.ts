@@ -3,14 +3,14 @@ import { Decimal } from 'decimal.js';
 
 export interface DatePriceDatum {
   id: string;
-  date: Date;
-  price: Decimal | null;
+  date: string;
+  price: Decimal;
   assetType: string;
 }
 
 const datePriceDataEntityAdapter = createEntityAdapter<DatePriceDatum>({
   selectId: (datePrice) => datePrice.id,
-  sortComparer: (a, b) => a.date.getTime() - b.date.getTime(),
+  sortComparer: (a, b) => Date.parse(a.date) - Date.parse(b.date),
 });
 
 export default datePriceDataEntityAdapter;

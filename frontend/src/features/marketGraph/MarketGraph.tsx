@@ -2,8 +2,11 @@ import { unwrapResult } from '@reduxjs/toolkit';
 import { AppDispatch } from 'features/redux/store';
 import { FC, FormEvent, Fragment } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { css } from '@emotion/react';
+import rem from 'utils/styles/rem';
 import assetDataEntityAdapter from './assetDataEntityAdapter';
 import fetchMarketDataByTickerThunk from './fetchMarketDataByTickerThunk';
+import generateCsvUrlThrunk from './generateCsvUrlThrunk';
 import {
   globalSelectYahooFinanceDataLoading,
   globalSelectYahooFinanceDataErrorMessage,
@@ -14,6 +17,7 @@ import {
   globalSelectMarketGraphDisplayOptions,
   globalSelectMarketGraphFinalDate,
   globalSelectAllioAllocation,
+  globalSelectMarketGraphCsvUrl,
 } from './marketGraphSelectors';
 import {
   addGraphDisplayOption,
@@ -25,8 +29,24 @@ import {
   updateGraphDisplayOption,
   updateAllioAllocationProportion,
   addAllioAllocationAsset,
+  generateMarketGraphData,
 } from './marketGraphSlice';
 import rawYahooFinanceChartDataEntityAdapter from './rawYahooFinanceChartDataEntityAdapter';
+
+const downloadLinkStyles = css`
+  border: ${rem(2)} dotted black;
+  padding: ${rem(4)} ${rem(8)};
+  font-size: ${rem(16)};
+  margin: ${rem(10)} ${rem(20)};
+
+  &:link {
+    color: black;
+  }
+  &:active,
+  &:hover {
+    color: blue;
+  }
+`;
 
 const {
   selectEntities: globalSelectRawYahooFinanceEntities,
@@ -63,6 +83,7 @@ const MarketGraph: FC = () => {
   const allioAllocationEntities = useSelector(
     globalSelectAllioAllocationEntities
   );
+  const csvUrl = useSelector(globalSelectMarketGraphCsvUrl);
 
   const handleTickerAdd = async (
     event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
@@ -91,6 +112,8 @@ const MarketGraph: FC = () => {
     event: FormEvent<HTMLInputElement> | FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
+    dispatch(generateMarketGraphData());
+    dispatch(generateCsvUrlThrunk());
   };
 
   return (
@@ -146,11 +169,17 @@ const MarketGraph: FC = () => {
             }}
           />
         </label>
+        <br />
         <input
           type="submit"
           value="Generate Grpah"
           onSubmit={handleGenerateGraphTrigger}
         />
+        {csvUrl && (
+          <a css={downloadLinkStyles} download="assetData.csv" href={csvUrl}>
+            Download CSV
+          </a>
+        )}
         <br />
         {graphOptionArray.map((graphOption) => {
           const { assetType } = graphOption;

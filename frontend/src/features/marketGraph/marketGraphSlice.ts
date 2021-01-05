@@ -8,7 +8,10 @@ import datePriceDataEntityAdapter, {
 import fetchMarketDataByTickerThunk from './fetchMarketDataByTickerThunk';
 import rawYahooFinanceChartDataEntityAdapter from './rawYahooFinanceChartDataEntityAdapter';
 import assetDataEntityAdapter from './assetDataEntityAdapter';
+import generateCsvUrlThrunk from './generateCsvUrlThrunk';
 /* eslint-disable no-param-reassign */
+
+const ALLIO_ASSET_TYPE = 'Allio';
 
 const rawYahooFinanceDataInitialState = rawYahooFinanceChartDataEntityAdapter.getInitialState(
   { loading: false, errorMessage: '' }
@@ -24,7 +27,11 @@ interface MarketGraphState {
     assetType: string;
     data: EntityState<DatePriceDatum>;
   }>;
-  marketGraphData: EntityState<DatePriceDatum>;
+  marketGraphData: EntityState<DatePriceDatum> & {
+    csvUrl: string;
+    csvColumnsOption: { key: string; header: string }[];
+    csvData: Record<string, string>[];
+  };
   graphDisplayOptions: EntityState<{
     assetType: string;
     data: {
@@ -58,7 +65,7 @@ const marketGraphSlice = createSlice({
     graphDisplayOptions: assetDataEntityAdapter.addOne(
       assetDataEntityAdapter.getInitialState(),
       {
-        assetType: 'Allio',
+        assetType: ALLIO_ASSET_TYPE,
         data: {
           show: false,
           color: 'navy',
@@ -66,7 +73,11 @@ const marketGraphSlice = createSlice({
       }
     ),
     allioAllocation: assetDataEntityAdapter.getInitialState(),
-    marketGraphData: datePriceDataEntityAdapter.getInitialState(),
+    marketGraphData: datePriceDataEntityAdapter.getInitialState({
+      csvUrl: '',
+      csvColumnsOption: [],
+      csvData: [],
+    }),
   } as MarketGraphState,
   reducers: {
     parseMarketCloseData(state, action: PayloadAction<YahooFinanceChartData>) {
@@ -90,7 +101,7 @@ const marketGraphSlice = createSlice({
           return datePriceDataEntityAdapter.upsertOne(data, {
             assetType: ticker,
             id: dateString,
-            date,
+            date: dateString,
             price,
           });
         },
@@ -180,8 +191,92 @@ const marketGraphSlice = createSlice({
         },
       });
     },
-    generateMarketGraphData() {
-      // datePriceDataEntityAdapter.removeAll(state.marketGraphData);
+    generateMarketGraphData(state) {
+      let marketGraphData = datePriceDataEntityAdapter.getInitialState({
+        csvUrl: '',
+      });
+      const intermediateData: Record<string, Record<string, Decimal>> = {};
+      const ratio: Record<string, Decimal> = {};
+      const initialDate = Date.parse(state.initialDate);
+      const finalDate = Date.parse(state.finalDate);
+      state.allioAllocation.ids.forEach((assetType) => {
+        state.parsedMarketCloseData.entities[assetType].data.ids.forEach(
+          (dateId) => {
+            const parsedAssetDatum =
+              state.parsedMarketCloseData.entities[assetType].data.entities[
+                dateId
+              ];
+            const date = Date.parse(parsedAssetDatum.date);
+            if (date < initialDate || date > finalDate) {
+              return;
+            }
+            if (!parsedAssetDatum.price) {
+              return;
+            }
+            if (!ratio[assetType]) {
+              ratio[assetType] = new Decimal(state.initialFund)
+                // @ts-ignore
+                .dividedBy(parsedAssetDatum.price);
+            }
+            const price = parsedAssetDatum.price.times(ratio[assetType]);
+            intermediateData[parsedAssetDatum.date] = {
+              ...intermediateData[parsedAssetDatum.date],
+              // @ts-ignore
+              [assetType]: price,
+            };
+            if (!state.graphDisplayOptions.entities[assetType].data.show) {
+              return;
+            }
+            marketGraphData = datePriceDataEntityAdapter.addOne(
+              marketGraphData,
+              {
+                assetType: assetType.toString(),
+                date: parsedAssetDatum.date,
+                id: `${assetType}-${parsedAssetDatum.id}`,
+                price,
+              }
+            );
+          }
+        );
+      });
+
+      const csvData: Record<string, string>[] = [];
+      Object.keys(intermediateData).forEach((dateString) => {
+        const datum: Record<string, string> = { date: dateString };
+        let totalPrice = new Decimal(0);
+        Object.keys(intermediateData[dateString]).forEach((assetType) => {
+          const price = intermediateData[dateString][assetType];
+          const { proportion } = state.allioAllocation.entities[assetType].data;
+          datum[assetType] = price.toFixed(2);
+          // @ts-ignore
+          totalPrice = totalPrice.plus(price.times(proportion));
+        });
+        if (state.graphDisplayOptions.entities[ALLIO_ASSET_TYPE].data.show) {
+          marketGraphData = datePriceDataEntityAdapter.addOne(marketGraphData, {
+            assetType: ALLIO_ASSET_TYPE,
+            date: dateString,
+            id: `${ALLIO_ASSET_TYPE}-${dateString}`,
+            price: totalPrice,
+          });
+          datum[ALLIO_ASSET_TYPE] = totalPrice.toFixed(2);
+        }
+        csvData.push(datum);
+      });
+
+      const csvColumnsOption = state.graphDisplayOptions.ids
+        .filter((id) => state.graphDisplayOptions.entities[id].data.show)
+        .map((id) => ({
+          key: `${id}`,
+          header: `${id}`,
+        }));
+      csvColumnsOption.unshift({ key: 'date', header: 'date' });
+
+      state.marketGraphData = {
+        ...marketGraphData,
+        csvColumnsOption,
+        csvData,
+        csvUrl: '',
+      };
     },
   },
   extraReducers: (builder) => {
@@ -201,6 +296,9 @@ const marketGraphSlice = createSlice({
       console.error(action.error);
       state.rawYahooFinanceData.errorMessage = action.error.message;
       state.rawYahooFinanceData.loading = false;
+    });
+    builder.addCase(generateCsvUrlThrunk.fulfilled, (state, action) => {
+      state.marketGraphData.csvUrl = action.payload;
     });
   },
 });
