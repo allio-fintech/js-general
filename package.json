@@ -40,6 +40,8 @@
   },
   "dependencies": {
     "axios": "^0.21.1",
-    "cors-anywhere": "^0.4.3"
+    "cors-anywhere": "^0.4.3",
+    "dotenv": "^8.2.0",
+    "immer": "^8.0.0"
   }
 }
