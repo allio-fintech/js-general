@@ -11,5 +11,11 @@ require('dotenv').config();
 // starting cors anywhere proxy
 // const proxy = require('./feature/corsAnywhere/corsAnywhere');
 // query financial news testing
-const { default: queryNews } = require('./feature/financialNewsApi/main');
-queryNews();
+// const { default: queryNews } = require('./feature/financialNewsApi/main');
+// queryNews();
+
+// get Finnhub
+// require('./feature/Finnhub/tradesApi');
+
+// get GoldApi
+require('./feature/GoldApi/goldApi');
